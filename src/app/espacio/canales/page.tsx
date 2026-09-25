@@ -98,7 +98,7 @@ const initialChannels: ChannelIntegration[] = [
     connected: true,
     associatedIdentity: "portal.destino.com (Burbuja Flotante)",
     description: "Widget interactivo con agente IA integrado para visitantes web.",
-    techDetails: "Script CDN asíncrono · Tokens de sesión anónima",
+      techDetails: "Script CDN asíncrono · Créditos de sesión anónima",
     activeAutomations: 1,
   },
 ];
@@ -296,7 +296,7 @@ export default function WorkspaceCanales() {
                 <ShieldCheck className="w-4 h-4 text-cyan-700 flex-shrink-0 mt-0.5" />
                 <span>
                   Los mensajes recibidos en este canal respetan el tope de frecuencia y quedan
-                  inmutables para atribución de acuerdos.
+              verificables para atribución de acuerdos.
                 </span>
               </div>
             </div>

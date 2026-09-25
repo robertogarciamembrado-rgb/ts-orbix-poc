@@ -110,8 +110,8 @@ const membershipPlans = [
     features: [
       "Espacio de Trabajo operativo completo",
       "Hasta 5 canales omnicanal conectados",
-      "Agentes IA con límites estándar de tokens",
-      "Gestión de CRM y Audiencia soberana",
+      "Agentes IA con límites estándar de créditos",
+      "Gestión de CRM: tu audiencia es tuya", 
     ],
   },
   {
@@ -173,7 +173,7 @@ export default function PartnerWizard({ onComplete, onCancel }: PartnerWizardPro
     setIsSubmitted(true);
     // TAREA 3: Toast exacto requerido
     toast.success(
-      "Identificador inmutable de Nodo generado. Roles asignados y Membresía en aprovisionamiento."
+      "Identificador verificable de Nodo generado. Roles asignados y Membresía en aprovisionamiento."
     );
 
     if (onComplete) {
@@ -197,7 +197,7 @@ export default function PartnerWizard({ onComplete, onCancel }: PartnerWizardPro
         </p>
 
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-left text-xs space-y-2 mb-6 text-slate-700 font-mono">
-          <div suppressHydrationWarning><span className="font-sans font-semibold text-slate-500">ID Inmutable Nodo:</span> node_{Math.random().toString(36).substring(2, 10)}</div>
+                      <div suppressHydrationWarning><span className="font-sans font-semibold text-slate-500">ID verificable de Nodo:</span> node_{Math.random().toString(36).substring(2, 10)}</div>
           <div><span className="font-sans font-semibold text-slate-500">Tipo de Actor:</span> {formData.tipo_actor}</div>
           <div><span className="font-sans font-semibold text-slate-500">Roles Asignados:</span> {formData.roles.join(", ")}</div>
           <div><span className="font-sans font-semibold text-slate-500">Ámbito Geográfico:</span> {formData.ambito_geografico}</div>
@@ -514,7 +514,7 @@ export default function PartnerWizard({ onComplete, onCancel }: PartnerWizardPro
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-2.5 text-xs text-slate-600">
               <ShieldCheck className="w-4 h-4 text-orbix-ts flex-shrink-0 mt-0.5" />
               <span>
-                El registro generará un identificador inmutable de nodo en el ledger de gobernanza
+                      El registro generará un identificador verificable de nodo en el ledger de gobernanza
                 de TS Orbix y creará las aristas correspondientes en el grafo de relaciones.
               </span>
             </div>

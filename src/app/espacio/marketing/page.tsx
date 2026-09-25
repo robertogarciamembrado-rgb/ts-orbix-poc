@@ -1,9 +1,10 @@
 // use client
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Send, AlertCircle, ToggleRight, ToggleLeft, Mail, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { getEspacioDashboard } from "@/lib/cortex/api";
 
 export default function MarketingSpace() {
   const [activeTab, setActiveTab] = useState("difusion");
@@ -20,6 +21,19 @@ export default function MarketingSpace() {
     bienvenida: true,
     recuperacion: false,
   });
+
+  // Cifras de ejecuciones y frecuencia — cargadas de la API
+  const [ejecucionesBienvenida, setEjecucionesBienvenida] = useState(1240);
+  const [ejecucionesRecuperacion, setEjecucionesRecuperacion] = useState(487);
+  const [contactosExcluidos, setContactosExcluidos] = useState(145);
+
+  useEffect(() => {
+    getEspacioDashboard().then((m) => {
+      setEjecucionesBienvenida(m.ejecucionesBienvenida);
+      setEjecucionesRecuperacion(m.ejecucionesRecuperacion);
+      setContactosExcluidos(m.contactosExcluidosFrecuencia);
+    });
+  }, []);
 
   const handleToggle = (key: string, name: string) => {
     setAutomationStates((prev) => {
@@ -38,7 +52,7 @@ export default function MarketingSpace() {
       toast.error("Por favor asigna un nombre a la campaña.");
       return;
     }
-    toast.success(`Campaña '${campaign.name}' encolada para envío en ${campaign.channel} (excluidos 145 contactos por tope de frecuencia).`);
+    toast.success(`Campaña '${campaign.name}' encolada para envío en ${campaign.channel} (excluidos ${contactosExcluidos} contactos por tope de frecuencia).`);
   };
 
   return (
@@ -152,7 +166,7 @@ export default function MarketingSpace() {
                 <div className="mt-5 flex items-start bg-amber-50 border-l-4 border-amber-400 p-4 rounded-xl">
                   <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mr-3 mt-0.5" />
                   <p className="text-xs sm:text-sm text-amber-800 leading-relaxed">
-                    <strong>Aviso de Protección de Red:</strong> 145 contactos de este segmento han alcanzado el tope de frecuencia mensual y serán excluidos del envío para evitar saturación.
+                    <strong>Aviso de Protección de Red:</strong> {contactosExcluidos} contactos de este segmento han alcanzado el tope de frecuencia mensual y serán excluidos del envío para evitar saturación.
                   </p>
                 </div>
 
@@ -184,7 +198,7 @@ export default function MarketingSpace() {
                   <div>
                     <p className="font-bold text-slate-800 text-sm">Bienvenida a Nuevos Miembros</p>
                     <p className="text-xs text-slate-500">Canal: Email Transaccional</p>
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">Ejecuciones este mes: 1,240</p>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">Ejecuciones este mes: {ejecucionesBienvenida.toLocaleString('es-ES')}</p>
                   </div>
                 </div>
                 <button
@@ -216,7 +230,7 @@ export default function MarketingSpace() {
                   <div>
                     <p className="font-bold text-slate-800 text-sm">Recuperación de Carrito Experiencia</p>
                     <p className="text-xs text-slate-500">Canal: WhatsApp API</p>
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">Ejecuciones este mes: 487</p>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">Ejecuciones este mes: {ejecucionesRecuperacion.toLocaleString('es-ES')}</p>
                   </div>
                 </div>
                 <button

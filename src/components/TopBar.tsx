@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, ChevronRight, Layers, LayoutGrid } from 'lucide-react';
+import { useDemoContext } from '@/components/DemoContext';
 
 interface TopBarProps {
   onToggleMobileMenu?: () => void;
@@ -14,7 +15,7 @@ const routeTitles: Record<string, string> = {
   '/cuenta/relaciones': 'Relaciones & Directorio',
   '/cuenta/ofertas': 'Catálogo de Ofertas',
   '/cuenta/encargos': 'Encargos & Publicaciones',
-  '/cuenta/saldo': 'Saldo & Tokens',
+  '/cuenta/saldo': 'Saldo & Créditos',
   '/cuenta/resultados': 'Rendimiento & Liquidaciones',
   '/cuenta/inteligencia': 'Inteligencia & Tendencias',
   '/cuenta/think-tank': 'Servicios Think Tank',
@@ -24,10 +25,13 @@ const routeTitles: Record<string, string> = {
   '/espacio/bandeja': 'Bandeja Omnicanal',
   '/espacio/agentes': 'Orquestación de Agentes IA',
   '/espacio/marketing': 'Marketing & Difusión',
+  '/resultados/informe': 'Informe mensual',
+  '/asistencia': 'Nodos asistidos',
 };
 
 export default function TopBar({ onToggleMobileMenu }: TopBarProps) {
   const pathname = usePathname();
+  const { nodeId, periodo, setNodeId, setPeriodo } = useDemoContext();
   const isWorkspace = pathname?.startsWith('/espacio');
   const currentSection = pathname ? routeTitles[pathname] || pathname.split('/').pop() || 'Vista' : 'Vista';
 
@@ -80,6 +84,27 @@ export default function TopBar({ onToggleMobileMenu }: TopBarProps) {
         <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs text-slate-600 font-medium">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>Nodo Online</span>
+        </div>
+
+        <div className="hidden lg:flex items-center gap-2" aria-label="Contexto de demostración">
+          <select
+            value={nodeId}
+            onChange={(event) => setNodeId(event.target.value)}
+            className="max-w-44 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orbix-cyan"
+            aria-label="Seleccionar nodo"
+          >
+            <option value="nodo-003">Hotel Madrid · Proveedor</option>
+            <option value="nodo-004">Blog de Viajes · Medio</option>
+          </select>
+          <select
+            value={periodo}
+            onChange={(event) => setPeriodo(event.target.value as 'mes' | 'trimestre')}
+            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-orbix-cyan"
+            aria-label="Seleccionar periodo"
+          >
+            <option value="mes">Mes actual</option>
+            <option value="trimestre">Trimestre</option>
+          </select>
         </div>
 
         <Link

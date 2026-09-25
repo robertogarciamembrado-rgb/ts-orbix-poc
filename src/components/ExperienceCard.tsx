@@ -1,6 +1,6 @@
 "use client";
 // src/components/ExperienceCard.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Clock,
   MapPin,
@@ -31,7 +31,6 @@ interface ExperienceCardProps {
   meta: { duration: string; location: string; audience: string };
   aiInsight: string;
   review: { text: string; stars: number };
-  commissionBadge?: string; // e.g. "Comisión: 15%"
 }
 
 export default function ExperienceCard({
@@ -43,16 +42,31 @@ export default function ExperienceCard({
   meta,
   aiInsight,
   review,
-  commissionBadge,
 }: ExperienceCardProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isPurchaseDialogOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isPurchaseDialogOpen]);
 
   const handleSimulateBuy = () => {
+    setIsPurchaseDialogOpen(true);
+  };
+
+  const confirmPurchase = () => {
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
+      setIsPurchaseDialogOpen(false);
       toast.success(
-        '¡Píxel disparado! Compra de 150 EUR registrada en la web del proveedor. Comisión del 10% atribuida automáticamente al distribuidor. Fondos comprometidos en la reserva.'
+        'Compra de 150 EUR registrada en la web del proveedor. La confirmación ha sido enviada.'
       );
     }, 1000);
   };
@@ -79,15 +93,6 @@ export default function ExperienceCard({
             </span>
           ))}
         </div>
-        {/* Commission badge (for network nodes) */}
-        {commissionBadge && (
-          <span
-            className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ backgroundColor: "#29DDDA", color: "#091231" }}
-          >
-            {commissionBadge}
-          </span>
-        )}
       </div>
 
       {/* ── BODY ─────────────────────────────────────────────── */}
@@ -173,6 +178,40 @@ export default function ExperienceCard({
           </button>
         ))}
       </div>
+
+      {isPurchaseDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="purchase-dialog-title"
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-slate-900 shadow-2xl">
+            <h2 id="purchase-dialog-title" className="text-xl font-bold">Continuar con la compra</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Te redirigiremos de forma segura a la web del proveedor para finalizar tu reserva.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPurchaseDialogOpen(false)}
+                disabled={isProcessing}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmPurchase}
+                disabled={isProcessing}
+                className="rounded-lg bg-orbix-cyan px-4 py-2 text-sm font-bold text-orbix-navy hover:brightness-105 disabled:opacity-75"
+              >
+                {isProcessing ? "Procesando..." : "Continuar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

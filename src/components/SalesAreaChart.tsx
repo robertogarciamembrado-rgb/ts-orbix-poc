@@ -9,14 +9,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const salesData = [
-  { mes: "Abr", ventas: 18 },
-  { mes: "May", ventas: 24 },
-  { mes: "Jun", ventas: 31 },
-  { mes: "Jul", ventas: 29 },
-  { mes: "Ago", ventas: 38 },
-  { mes: "Sep", ventas: 45 },
-];
+interface SalesDataPoint {
+  mes: string;
+  ventas: number;
+}
 
 interface TooltipPayload { value: number }
 interface CustomTooltipProps {
@@ -38,10 +34,14 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   );
 }
 
-export default function SalesAreaChart() {
+interface SalesAreaChartProps {
+  data: SalesDataPoint[];
+}
+
+export default function SalesAreaChart({ data }: SalesAreaChartProps) {
   return (
     <ResponsiveContainer width="100%" height={190}>
-      <AreaChart data={salesData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
         <defs>
           <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%"  stopColor="#29DDDA" stopOpacity={0.25} />

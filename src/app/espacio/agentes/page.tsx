@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bot,
   Power,
@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Circle,
 } from "lucide-react";
+import { getEspacioDashboard } from "@/lib/cortex/api";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 type Tone = "Formal" | "Entusiasta" | "Directo";
@@ -153,8 +154,13 @@ export default function EspacioAgentes() {
   const [maxFreq, setMaxFreq] = useState(2);
   const [tone, setTone] = useState<Tone>("Entusiasta");
   const [saved, setSaved] = useState(false);
+  const [interaccionesDia, setInteraccionesDia] = useState(47);
 
-  const estCost = maxFreq; // 1 token per interaction × freq
+  useEffect(() => {
+    getEspacioDashboard().then((m) => setInteraccionesDia(m.interaccionesAgenteDia));
+  }, []);
+
+  const estCost = maxFreq; // 1 crédito por interacción × frecuencia
 
   function handleSave() {
     setSaved(true);
@@ -253,8 +259,8 @@ export default function EspacioAgentes() {
           {/* Quick stats row */}
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { icon: MessageSquare, label: "Interacciones hoy",    val: agentEnabled ? "47" : "—" },
-              { icon: Coins,         label: "Tokens consumidos",    val: agentEnabled ? "47 T" : "—" },
+              { icon: MessageSquare, label: "Interacciones hoy",    val: agentEnabled ? String(interaccionesDia) : "—" },
+        { icon: Coins,         label: "Créditos consumidos",    val: agentEnabled ? `${interaccionesDia} C` : "—" },
               { icon: Clock,         label: "Última interacción",   val: agentEnabled ? "hace 8 min" : "—" },
             ].map(({ icon: Icon, label, val }) => (
               <div
@@ -331,7 +337,7 @@ export default function EspacioAgentes() {
               <div>
                 <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Consumo estimado</p>
                 <p className="text-sm font-bold" style={{ color: "#29DDDA" }}>
-                  {estCost} Token{estCost !== 1 ? "s" : ""} por interacción
+                    {estCost} Crédito{estCost !== 1 ? "s" : ""} por interacción
                 </p>
               </div>
             </div>

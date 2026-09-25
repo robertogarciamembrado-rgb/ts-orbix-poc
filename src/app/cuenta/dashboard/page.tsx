@@ -1,78 +1,22 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SalesAreaChart from "@/components/SalesAreaChart";
 import { formatTokens } from "@/lib/format";
 import { toast } from "sonner";
 import {
-  Star,
-  Coins,
-  Handshake,
-  ShoppingBag,
-  RefreshCw,
-  AlertTriangle,
-  Bell,
-  CheckCircle,
-  ChevronRight,
-  TrendingUp,
-  ArrowUpRight,
-  Award,
-  Sparkles,
+  Star, Coins, Handshake, ShoppingBag, RefreshCw,
+  AlertTriangle, Bell, CheckCircle, ChevronRight,
+  TrendingUp, ArrowUpRight, Award, Sparkles,
 } from "lucide-react";
-
-// ─── Mock data ─────────────────────────────────────────────────────────────
-const topOffers = [
-  { id: 1, title: "Tour Gastronómico Madrid",   provider: "Propia",                 sales: 14, commission: 15, trend: +3 },
-  { id: 2, title: "Estancia Premium – Hotel Madrid", provider: "Hotel Madrid",      sales: 6,  commission: 18, trend: +1 },
-  { id: 3, title: "Informe Tendencias 2026",    provider: "Think Tank",             sales: 3,  commission: 12, trend: 0 },
-];
-
-type AlertStatus = "pending" | "reviewing" | "resolved";
-
-interface AlertItem {
-  id: number;
-  type: "warning" | "info" | "success";
-  title: string;
-  body: string;
-  cta: string;
-  status: AlertStatus;
-}
-
-const initialAlerts: AlertItem[] = [
-  {
-    id: 1,
-    type: "warning",
-    title: "Comisión modificada",
-    body: "Hotel Madrid ha modificado su comisión del 10% → 8%. Se requiere reaceptación para continuar distribuyendo.",
-    cta: "Revisar",
-    status: "pending",
-  },
-  {
-    id: 2,
-    type: "info",
-    title: "Encargo pendiente",
-    body: "Patronato de Turismo de Madrid espera tu prueba de publicación para 'Artículo Patrocinado'.",
-    cta: "Subir prueba",
-    status: "pending",
-  },
-  {
-    id: 3,
-    type: "success",
-    title: "Acuerdo renovado",
-    body: "Tu acuerdo marco con Think Tank ha sido renovado automáticamente por 12 meses.",
-    cta: "Ver acuerdo",
-    status: "resolved",
-  },
-];
+import { evaluateNodeHealth, getDashboard, getAlertas, getTopOfertas, getChartVentas, getDistribuciones, getPixelMetrics, getSaldo } from "@/lib/cortex/api";
+import type { NodeHealthAlert, PixelMetricsResponse, SaldoResponse } from "@/lib/cortex/api";
+import NodeHealth from "@/components/NodeHealth";
+import type { DashboardResponse, TopOfertaItem } from "@/lib/cortex/api";
+import type { Alerta } from "@/lib/cortex/seed";
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  accent,
-  badge,
-  action,
+  icon: Icon, label, value, sub, accent, badge, action,
 }: {
   icon: React.ElementType;
   label: string;
@@ -113,13 +57,13 @@ function MetricCard({
   );
 }
 
-const alertStyles: Record<AlertItem["type"], { border: string; iconColor: string; bg: string }> = {
-  warning: { border: "#F59E0B",  iconColor: "#F59E0B", bg: "#FFFBEB" },
-  info:    { border: "#3371AF",  iconColor: "#3371AF", bg: "#EFF6FF" },
-  success: { border: "#29DDDA",  iconColor: "#29DDDA", bg: "#F0FFFE" },
+const alertStyles: Record<Alerta["tipo"], { border: string; iconColor: string; bg: string }> = {
+  warning: { border: "#F59E0B", iconColor: "#F59E0B", bg: "#FFFBEB" },
+  info:    { border: "#3371AF", iconColor: "#3371AF", bg: "#EFF6FF" },
+  success: { border: "#29DDDA", iconColor: "#29DDDA", bg: "#F0FFFE" },
 };
 
-const alertIcons: Record<AlertItem["type"], React.ElementType> = {
+const alertIcons: Record<Alerta["tipo"], React.ElementType> = {
   warning: AlertTriangle,
   info:    Bell,
   success: CheckCircle,
@@ -127,33 +71,88 @@ const alertIcons: Record<AlertItem["type"], React.ElementType> = {
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 export default function CuentaDashboard() {
-  const [alerts, setAlerts] = useState<AlertItem[]>(initialAlerts);
-  const [tokens, setTokens] = useState(1250);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [alerts, setAlerts] = useState<Alerta[]>([]);
+  const [topOfertas, setTopOfertas] = useState<TopOfertaItem[]>([]);
+  const [chartData, setChartData] = useState<{ mes: string; ventas: number }[]>([]);
+  const [tokens, setTokens] = useState<number | null>(null);
+  const [saldo, setSaldo] = useState<SaldoResponse | null>(null);
+  const [pixel, setPixel] = useState<PixelMetricsResponse | null>(null);
+  const [pendingDistributions, setPendingDistributions] = useState(0);
+
+  useEffect(() => {
+    Promise.all([getDashboard(), getAlertas(), getTopOfertas(), getChartVentas(), getSaldo(), getPixelMetrics(), getDistribuciones()]).then(
+      ([d, a, t, c, s, p, distributions]) => {
+        setDashboard(d);
+        setAlerts(a);
+        setTopOfertas(t);
+        setChartData(c);
+        setTokens(d.tokensDisponibles);
+        setSaldo(s);
+        setPixel(p);
+        setPendingDistributions(distributions.filter((distribution) => distribution.pendienteReaceptacion).length);
+      }
+    );
+  }, []);
 
   function handleAlertAction(id: number) {
     setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: a.status === "pending" ? "reviewing" : "resolved" } : a))
+      prev.map((a) => (a.id === id ? { ...a, estado: a.estado === "pending" ? "reviewing" : "resolved" } : a))
     );
   }
 
   function handleQuickReaccept(id: number) {
     setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: "resolved" } : a))
+      prev.map((a) => (a.id === id ? { ...a, estado: "resolved" } : a))
     );
     toast.success("Comisión reaceptada mediante Insight IA. Oferta de Hotel Madrid activa sin interrupción.");
   }
 
+  if (!dashboard)
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-10 bg-slate-200 rounded w-1/3" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-32 bg-slate-200 rounded-xl" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-80 bg-slate-200 rounded-xl" />
+          <div className="h-80 bg-slate-200 rounded-xl" />
+        </div>
+      </div>
+    );
+
+  const currentTokens = tokens ?? dashboard.tokensDisponibles;
+  const healthAlerts: NodeHealthAlert[] = pixel && saldo
+    ? evaluateNodeHealth({
+      pixelEstado: pixel.estado,
+      distribucionesPendientes: pendingDistributions,
+      saldoDisponible: saldo.disponible,
+      diasParaCaducidad: saldo.diasParaCaducidad,
+      reputacion: dashboard.reputacion,
+      agenteActivo: true,
+    })
+    : [];
+
   return (
     <div className="space-y-6">
+      {saldo?.diasParaCaducidad !== null && saldo?.diasParaCaducidad !== undefined && saldo.diasParaCaducidad < 30 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-950">
+          <strong>Alerta de créditos:</strong> tienes un lote que caduca en {saldo.diasParaCaducidad} días.
+          Revisa el saldo para priorizar su uso antes de que se pierda.
+        </div>
+      )}
 
       {/* ── HEADER ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "#091231" }}>Dashboard</h1>
           <p className="text-sm mt-0.5" style={{ color: "#3371AF" }}>
-            Bienvenido de vuelta · Septiembre 2026
+            Bienvenido de vuelta · {dashboard.periodo}
           </p>
         </div>
+
+        <NodeHealth alerts={healthAlerts} />
         <div
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold"
           style={{ backgroundColor: "#091231", color: "#29DDDA" }}
@@ -168,33 +167,33 @@ export default function CuentaDashboard() {
         <MetricCard
           icon={Star}
           label="Reputación en la Red"
-          value="98/100"
+          value={`${dashboard.reputacion}/100`}
           sub="Actualizado hoy"
           accent="#29DDDA"
           badge={{ text: "Excelente", color: "#065F46", bg: "#D1FAE5" }}
         />
         <MetricCard
           icon={Coins}
-          label="Tokens Disponibles"
-          value={formatTokens(tokens)}
-          sub="Lote más próximo a caducar: 100 T"
+              label="Créditos Disponibles"
+          value={formatTokens(currentTokens)}
+          sub={`Lote más próximo a caducar: ${dashboard.loteMasProximoCaducar} T`}
           accent="#3371AF"
-          action={{ label: "Recargar", onClick: () => setTokens((t) => t + 500) }}
+          action={{ label: "Recargar", onClick: () => setTokens((t) => (t ?? 0) + 500) }}
         />
         <MetricCard
           icon={Handshake}
           label="Acuerdos Activos"
-          value="7"
-          sub="2 acuerdos en revisión"
+          value={dashboard.acuerdosActivos}
+          sub={`${dashboard.acuerdosEnRevision} acuerdos en revisión`}
           accent="#223F7C"
         />
         <MetricCard
           icon={ShoppingBag}
           label="Ventas Atribuidas"
-          value="23"
-          sub="Este mes · +14% vs anterior"
+          value={dashboard.ventasAtribuidas}
+          sub={`Este mes · +${dashboard.pctVsAnterior}% vs anterior`}
           accent="#29DDDA"
-          badge={{ text: "+14%", color: "#065F46", bg: "#D1FAE5" }}
+          badge={{ text: `+${dashboard.pctVsAnterior}%`, color: "#065F46", bg: "#D1FAE5" }}
         />
       </div>
 
@@ -203,7 +202,6 @@ export default function CuentaDashboard() {
 
         {/* ── LEFT: Alerts & Tasks ── */}
         <div className="rounded-xl bg-white border shadow-sm overflow-hidden" style={{ borderColor: "#ECF0F5" }}>
-          {/* Header */}
           <div className="px-5 py-4 border-b flex items-center gap-2" style={{ borderColor: "#ECF0F5" }}>
             <Bell className="w-4 h-4" style={{ color: "#29DDDA" }} />
             <h2 className="font-bold text-base" style={{ color: "#091231" }}>Alertas y Tareas</h2>
@@ -211,23 +209,21 @@ export default function CuentaDashboard() {
               className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full"
               style={{ backgroundColor: "#29DDDA", color: "#091231" }}
             >
-              {alerts.filter((a) => a.status === "pending").length} pendientes
+              {alerts.filter((a) => a.estado === "pending").length} pendientes
             </span>
           </div>
 
-          {/* Alert list */}
           <ul className="divide-y" style={{ borderColor: "#ECF0F5" }}>
             {alerts.map((alert) => {
-              const style = alertStyles[alert.type];
-              const Icon = alertIcons[alert.type];
-              const isDone = alert.status === "resolved";
+              const style = alertStyles[alert.tipo];
+              const Icon = alertIcons[alert.tipo];
+              const isDone = alert.estado === "resolved";
               return (
                 <li
                   key={alert.id}
                   className="px-5 py-4 flex gap-3 transition-opacity"
                   style={{ opacity: isDone ? 0.5 : 1 }}
                 >
-                  {/* Icon */}
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
                     style={{ backgroundColor: style.bg }}
@@ -235,32 +231,29 @@ export default function CuentaDashboard() {
                     <Icon className="w-4 h-4" style={{ color: style.iconColor }} />
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold mb-0.5" style={{ color: "#091231" }}>
-                      {alert.title}
+                      {alert.titulo}
                     </p>
                     <p className="text-xs leading-relaxed" style={{ color: "#3371AF" }}>
-                      {alert.body}
+                      {alert.cuerpo}
                     </p>
-                    {/* Left-accent bar */}
                     <div
                       className="w-full h-px mt-2 mb-2 rounded"
                       style={{ backgroundColor: style.border + "40" }}
                     />
-                    {/* Action button */}
                     {!isDone ? (
                       <div>
                         <button
                           onClick={() => handleAlertAction(alert.id)}
                           className="flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-lg transition-all hover:brightness-110"
                           style={{
-                            backgroundColor: alert.status === "reviewing" ? "#ECF0F5" : "#091231",
-                            color: alert.status === "reviewing" ? "#3371AF" : "#FFFFFF",
+                            backgroundColor: alert.estado === "reviewing" ? "#ECF0F5" : "#091231",
+                            color: alert.estado === "reviewing" ? "#3371AF" : "#FFFFFF",
                           }}
                         >
-                          {alert.status === "reviewing" ? "Revisando…" : alert.cta}
-                          {alert.status === "pending" && <ChevronRight className="w-3 h-3" />}
+                          {alert.estado === "reviewing" ? "Revisando…" : alert.cta}
+                          {alert.estado === "pending" && <ChevronRight className="w-3 h-3" />}
                         </button>
 
                         {/* Bloque IA Agéntica para Comisión modificada */}
@@ -299,18 +292,17 @@ export default function CuentaDashboard() {
 
         {/* ── RIGHT: Top Offers ── */}
         <div className="rounded-xl bg-white border shadow-sm overflow-hidden" style={{ borderColor: "#ECF0F5" }}>
-          {/* Header */}
           <div className="px-5 py-4 border-b flex items-center gap-2" style={{ borderColor: "#ECF0F5" }}>
             <TrendingUp className="w-4 h-4" style={{ color: "#29DDDA" }} />
             <h2 className="font-bold text-base" style={{ color: "#091231" }}>Top Ofertas Distribuidas</h2>
-            <span className="ml-auto text-xs" style={{ color: "#3371AF" }}>Septiembre 2026</span>
+            <span className="ml-auto text-xs" style={{ color: "#3371AF" }}>{dashboard.periodo}</span>
           </div>
 
           {/* Evolución de Ventas — Recharts AreaChart */}
           <div className="px-5 pt-4 pb-2">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
               <p className="text-xs font-semibold uppercase tracking-wide pt-1" style={{ color: "#3371AF" }}>
-                Evolución de Ventas Atribuidas · ABR-SEP 2026
+                Evolución de Ventas Atribuidas · {dashboard.periodo}
               </p>
               {/* Badge/Bloque flotante Agente de Análisis */}
               <div className="bg-[#29DDDA]/10 border border-[#29DDDA]/30 rounded-xl p-2.5 max-w-sm flex items-start gap-2 shadow-xs">
@@ -336,21 +328,19 @@ export default function CuentaDashboard() {
                 </div>
               </div>
             </div>
-            <SalesAreaChart />
+            <SalesAreaChart data={chartData} />
           </div>
           <div className="border-t mx-5 mb-1" style={{ borderColor: "#ECF0F5" }} />
 
           {/* Offers list */}
           <ul className="divide-y" style={{ borderColor: "#ECF0F5" }}>
-            {topOffers.map((offer, idx) => {
-              const maxSales = topOffers[0].sales;
+            {topOfertas.map((offer, idx) => {
+              const maxSales = topOfertas[0]?.sales ?? 1;
               const barPct = Math.round((offer.sales / maxSales) * 100);
               return (
                 <li key={offer.id} className="px-5 py-4">
-                  {/* Top row */}
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      {/* Rank badge */}
                       <span
                         className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{
@@ -367,14 +357,12 @@ export default function CuentaDashboard() {
                         <p className="text-xs" style={{ color: "#3371AF" }}>{offer.provider}</p>
                       </div>
                     </div>
-                    {/* Stats */}
                     <div className="text-right flex-shrink-0">
                       <p className="text-sm font-bold" style={{ color: "#091231" }}>{offer.sales} ventas</p>
                       <p className="text-xs" style={{ color: "#3371AF" }}>Com. {offer.commission}%</p>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
                   <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: "#ECF0F5" }}>
                     <div
                       className="h-1.5 rounded-full transition-all"
@@ -385,7 +373,6 @@ export default function CuentaDashboard() {
                     />
                   </div>
 
-                  {/* Trend */}
                   {offer.trend !== 0 && (
                     <div className="flex items-center gap-1 mt-1.5">
                       <ArrowUpRight className="w-3 h-3" style={{ color: "#059669" }} />

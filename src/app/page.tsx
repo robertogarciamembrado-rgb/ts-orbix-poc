@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LandingNavbar from "@/components/LandingNavbar";
@@ -32,6 +32,16 @@ export default function LandingPage() {
   const openPartner = () => setModalType("partner");
   const closeModal = () => setModalType(null);
 
+  useEffect(() => {
+    if (!modalType) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [modalType]);
+
   return (
     <div
       className="min-h-screen bg-orbix-navy text-white selection:bg-[#29DDDA] selection:text-[#091231] font-sans antialiased overflow-x-hidden"
@@ -42,8 +52,8 @@ export default function LandingPage() {
 
       {/* Modal interactivo de Registro */}
       {modalType && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto animate-fadeIn">
-          <div className="relative w-full max-w-3xl my-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-sm">
+          <div className="relative z-10 my-8 w-full max-w-3xl">
             <button
               onClick={closeModal}
               className="absolute -top-12 right-0 md:-right-10 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all"
@@ -89,7 +99,7 @@ export default function LandingPage() {
         {/* TEXTOS LATERALES/SUBTÍTULO (Ligeramente reducidos y elegantes) */}
         <p className="max-w-2xl text-base sm:text-lg text-white/70 font-normal leading-relaxed mb-12">
           La red que conecta a viajeros conscientes, destinos inteligentes y organizaciones
-          líderes bajo una economía circular con gobernanza soberana.
+          líderes bajo una economía circular con datos aislados por nodo.
         </p>
 
         {/* BOTONES DE LLAMADA A LA ACCIÓN (A la misma altura, con margen suficiente) */}
@@ -147,7 +157,7 @@ export default function LandingPage() {
                 icon: Megaphone,
                 title: "Monetiza tu comunidad sin fricción",
                 text:
-                  "Distribuye los productos de la red a tu audiencia. Promocionar no cuesta créditos. Gana comisiones por cada venta atribuida de forma automática e inmutable.",
+                  "Distribuye los productos de la red a tu audiencia. Promocionar no cuesta créditos. Gana comisiones por cada venta atribuida de forma automática y verificable.",
               },
               {
                 icon: Landmark,
@@ -188,7 +198,7 @@ export default function LandingPage() {
               <p className="text-base text-slate-600 leading-relaxed mb-6">
                 TS Orbix elimina la intermediación opaca y la dependencia de algoritmos extractivos.
                 A través de nodos interconectados, destinos, empresas y viajeros colaboran de forma
-                directa con acuerdos claros, trazabilidad inmutable y comisiones éticas.
+                directa con acuerdos claros, trazabilidad verificable y comisiones éticas.
               </p>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -211,10 +221,10 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">
-                      Economía Basada en Tokens de Utilidad
+                      Economía de créditos de participación
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Recompensas por valor aportado a la red, acceso a inteligencia y liquidaciones en tokens o fiat.
+                      Recompensas por valor aportado a la red, acceso a inteligencia y cobro en dinero o en créditos con bonificación.
                     </p>
                   </div>
                 </div>
@@ -245,11 +255,8 @@ export default function LandingPage() {
                   <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center justify-between">
                     <div>
                       <div className="text-xs text-slate-400">Contrato Bilateral</div>
-                      <div className="text-sm font-bold text-orbix-navy">Comisión Máxima: 10%</div>
+                      <div className="text-sm font-bold text-orbix-navy">Comisión ofrecida por el proveedor</div>
                     </div>
-                    <span className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 text-slate-700 rounded-full">
-                      Inmutable
-                    </span>
                   </div>
                   <div className="bg-orbix-navy p-4 rounded-xl text-white flex items-center justify-between">
                     <div>
@@ -316,7 +323,7 @@ export default function LandingPage() {
                 Para el Viajero y Ciudadano
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-orbix-navy mb-6 leading-tight">
-                Descubre el mundo con una credencial soberana
+                Descubre el mundo desde tu base de contactos del nodo
               </h2>
               <p className="text-base text-slate-600 leading-relaxed mb-6">
                 Como <strong>Orbixer</strong>, accedes a experiencias turísticas curadas,

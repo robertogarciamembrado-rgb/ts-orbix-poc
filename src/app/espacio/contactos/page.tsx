@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Search,
   Filter,
@@ -10,92 +10,47 @@ import {
   Download,
   Plus,
   MessageCircle,
-  ExternalLink,
   ChevronDown,
   Clock,
   Sparkles,
-  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
-
-interface ContactItem {
-  id: string;
-  name: string;
-  channel: "WhatsApp" | "Instagram" | "Telegram" | "Webchat";
-  tags: string[];
-  lastInteraction: string;
-  ltv: string;
-  consent: boolean;
-}
-
-const initialContacts: ContactItem[] = [
-  {
-    id: "wa_+34612345678",
-    name: "Laura González",
-    channel: "WhatsApp",
-    tags: ["VIP", "Gastronomía"],
-    lastInteraction: "Hace 2 horas",
-    ltv: "450 EUR",
-    consent: true,
-  },
-  {
-    id: "ig_viajero_madrid",
-    name: "Carlos Mendoza",
-    channel: "Instagram",
-    tags: ["Aventura", "Senderismo"],
-    lastInteraction: "Ayer 18:30",
-    ltv: "1,200 EUR",
-    consent: true,
-  },
-  {
-    id: "wa_+34698765432",
-    name: "Beatriz Santos",
-    channel: "WhatsApp",
-    tags: ["Familia", "Sol y Playa"],
-    lastInteraction: "Hace 3 días",
-    ltv: "890 EUR",
-    consent: false,
-  },
-  {
-    id: "tg_elena_rot",
-    name: "Elena Rotger",
-    channel: "Telegram",
-    tags: ["Negocios/MICE"],
-    lastInteraction: "Hace 15 min",
-    ltv: "1,650 EUR",
-    consent: true,
-  },
-  {
-    id: "wa_+34655443322",
-    name: "Javier Vidal",
-    channel: "WhatsApp",
-    tags: ["Bienestar", "Rural"],
-    lastInteraction: "Hace 5 días",
-    ltv: "320 EUR",
-    consent: true,
-  },
-  {
-    id: "web_sess_8941",
-    name: "Visitante Web #8941",
-    channel: "Webchat",
-    tags: ["Nuevo Prospecto"],
-    lastInteraction: "Hace 4 horas",
-    ltv: "0 EUR",
-    consent: false,
-  },
-];
+import { getContactos } from "@/lib/cortex/api";
+import type { Contacto } from "@/lib/cortex/seed";
+import { formatTiempoRelativo } from "@/lib/utils/time";
+import AgentInsight from "@/components/AgentInsight";
+import { getContactSegmentInsight, saveContactSegmentLabel, type ContactSegmentInsight } from "@/lib/cortex/api";
 
 export default function WorkspaceContacts() {
+  const [contactos, setContactos] = useState<Contacto[] | null>(null);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [selectedContactMenu, setSelectedContactMenu] = useState<string | null>(null);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [segmentInsight, setSegmentInsight] = useState<ContactSegmentInsight | null>(null);
+  const [segmentSaved, setSegmentSaved] = useState(false);
+
+  useEffect(() => {
+    Promise.all([getContactos(), getContactSegmentInsight()]).then(([contacts, insight]) => {
+      setContactos(contacts);
+      setSegmentInsight(insight);
+    });
+  }, []);
+
+  if (!contactos)
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-24 bg-slate-200 rounded-2xl" />
+        <div className="h-12 bg-slate-200 rounded-xl" />
+        <div className="h-64 bg-slate-200 rounded-2xl" />
+      </div>
+    );
 
   // Filtrado reactivo por ID, Nombre o Etiqueta
-  const filteredContacts = initialContacts.filter((c) => {
+  const filteredContacts = contactos.filter((c) => {
     const matchesSearch =
       c.id.toLowerCase().includes(search.toLowerCase()) ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.nombre.toLowerCase().includes(search.toLowerCase()) ||
       c.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
 
     const matchesFilter = activeFilter ? c.tags.includes(activeFilter) : true;
@@ -106,6 +61,22 @@ export default function WorkspaceContacts() {
     setSelectedContactMenu((prev) => (prev === id ? null : id));
   };
 
+  // Conjunto de etiquetas únicas para los filtros rápidos
+  const allTags = Array.from(new Set(contactos.flatMap((c) => c.tags)));
+
+  async function handleSaveSegment() {
+    if (!segmentInsight) return;
+    const saved = await saveContactSegmentLabel(segmentInsight.label);
+    setContactos((current) => current
+      ? current.map((contact, index) => index < 2 && !contact.tags.includes(saved.label)
+        ? { ...contact, tags: [...contact.tags, saved.label] }
+        : contact)
+      : current);
+    setActiveFilter(saved.label);
+    setSegmentSaved(true);
+    toast.success(`Segmento guardado como etiqueta: ${saved.label}`);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -115,13 +86,13 @@ export default function WorkspaceContacts() {
             <span className="px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-[#3371AF]/10 text-orbix-ts border border-[#3371AF]/20">
               Workspace Layer
             </span>
-            <span className="text-xs text-slate-500 font-medium">Audiencia Propia Soberana</span>
+            <span className="text-xs text-slate-500 font-medium">Tu audiencia es tuya</span>
           </div>
           <h1 className="text-2xl font-bold text-orbix-navy">
             Gestión de Contactos &amp; CRM
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Base de datos soberana de tu nodo con trazabilidad de consentimiento y valor acumulado.
+            Base de contactos del nodo, aislada y con trazabilidad de consentimiento y valor acumulado.
           </p>
         </div>
 
@@ -143,9 +114,20 @@ export default function WorkspaceContacts() {
         </div>
       </div>
 
+      {segmentInsight && (
+        <AgentInsight
+          observation={segmentInsight.observation}
+          proposal={segmentInsight.proposal}
+          reason={segmentInsight.reason}
+          actionLabel="Guardar segmento como etiqueta"
+          onApprove={handleSaveSegment}
+          approved={segmentSaved}
+        />
+      )}
+
       {/* Barra de Filtros y Búsqueda */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Buscador ('Buscar por ID o etiqueta') */}
+        {/* Buscador */}
         <div className="relative w-full sm:w-96">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -194,7 +176,7 @@ export default function WorkspaceContacts() {
       {showFiltersModal && (
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center gap-2 text-xs">
           <span className="font-bold text-slate-600 mr-2">Filtrar por etiqueta:</span>
-          {["VIP", "Gastronomía", "Aventura", "Familia", "Negocios/MICE", "Rural"].map((tag) => (
+          {allTags.map((tag) => (
             <button
               key={tag}
               onClick={() => {
@@ -215,8 +197,8 @@ export default function WorkspaceContacts() {
 
       {/* Tabla Enriquecida */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
+        <div className="w-full max-w-full overflow-x-auto">
+          <table className="min-w-[860px] w-full divide-y divide-slate-200">
             <thead style={{ backgroundColor: "#091231" }}>
               <tr>
                 <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-white">
@@ -258,7 +240,7 @@ export default function WorkspaceContacts() {
                   >
                     {/* ID y Nombre */}
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="font-bold text-orbix-navy">{contact.name}</div>
+                      <div className="font-bold text-orbix-navy">{contact.nombre}</div>
                       <div className="text-xs font-mono text-slate-400 mt-0.5">{contact.id}</div>
                     </td>
 
@@ -266,7 +248,7 @@ export default function WorkspaceContacts() {
                     <td className="px-5 py-4 whitespace-nowrap">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
                         <MessageCircle className="w-3.5 h-3.5 text-orbix-ts" />
-                        {contact.channel}
+                        {contact.canal}
                       </span>
                     </td>
 
@@ -289,18 +271,20 @@ export default function WorkspaceContacts() {
                     <td className="px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
                         <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{contact.lastInteraction}</span>
+                        <span suppressHydrationWarning>{formatTiempoRelativo(contact.ultimaInteraccion)}</span>
                       </div>
                     </td>
 
                     {/* Valor de Vida (LTV) */}
                     <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="font-bold text-orbix-navy">{contact.ltv}</span>
+                      <span className="font-bold text-orbix-navy" suppressHydrationWarning>
+                        {contact.ltv > 0 ? `${contact.ltv.toLocaleString("es-ES")} EUR` : "0 EUR"}
+                      </span>
                     </td>
 
                     {/* Consentimiento */}
                     <td className="px-5 py-4 whitespace-nowrap">
-                      {contact.consent ? (
+                      {contact.consentimiento ? (
                         <span
                           className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold"
                           style={{ backgroundColor: "#29DDDA", color: "#091231" }}
@@ -330,7 +314,7 @@ export default function WorkspaceContacts() {
                           <button
                             onClick={() => {
                               setSelectedContactMenu(null);
-                              toast.info(`Abriendo expediente de ${contact.name}`);
+                              toast.info(`Abriendo expediente de ${contact.nombre}`);
                             }}
                             className="w-full px-3.5 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
                           >
@@ -340,7 +324,7 @@ export default function WorkspaceContacts() {
                           <button
                             onClick={() => {
                               setSelectedContactMenu(null);
-                              toast.success(`Etiqueta añadida al contacto ${contact.name}`);
+                              toast.success(`Etiqueta añadida al contacto ${contact.nombre}`);
                             }}
                             className="w-full px-3.5 py-2 hover:bg-slate-50 text-slate-700 flex items-center gap-2"
                           >

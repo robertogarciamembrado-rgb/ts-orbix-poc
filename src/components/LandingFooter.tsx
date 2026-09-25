@@ -81,9 +81,9 @@ export default function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href="#contacto" className="hover:text-orbix-cyan transition-colors">
+                <Link href="/" className="hover:text-orbix-cyan transition-colors">
                   Contacto Institucional
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -96,19 +96,19 @@ export default function LandingFooter() {
           {/* Enlaces Legales requeridos exclusivamente en el Footer */}
           <div className="flex flex-wrap items-center gap-6">
             <Link
-              href="/legal/aviso-legal"
+              href="/"
               className="hover:text-orbix-cyan transition-colors underline-offset-4 hover:underline"
             >
               Aviso Legal
             </Link>
             <Link
-              href="/legal/privacidad"
+              href="/"
               className="hover:text-orbix-cyan transition-colors underline-offset-4 hover:underline"
             >
               Política de Privacidad
             </Link>
             <Link
-              href="/legal/cookies"
+              href="/"
               className="hover:text-orbix-cyan transition-colors underline-offset-4 hover:underline"
             >
               Política de Cookies

@@ -95,7 +95,7 @@ export default function OrbixerWizard({ onComplete, onCancel }: OrbixerWizardPro
         <h3 className="text-2xl font-bold text-orbix-navy mb-2">¡Bienvenido a TS Orbix!</h3>
         <p className="text-slate-600 text-sm mb-6">
           Tu registro en <strong className="text-orbix-navy">miembros_red</strong> ha sido
-          confirmado. Tu consentimiento <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono text-orbix-ts">incorporacion_a_red</code> está formalizado criptográficamente.
+              confirmado. Tu consentimiento <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded font-mono text-orbix-ts">incorporacion_a_red</code> está formalizado de forma verificable.
         </p>
 
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-left text-xs space-y-2 mb-6 text-slate-700">
@@ -155,7 +155,7 @@ export default function OrbixerWizard({ onComplete, onCancel }: OrbixerWizardPro
             <div>
               <h3 className="text-xl font-bold text-orbix-navy">Paso 1: Identidad del Miembro</h3>
               <p className="text-sm text-slate-500 mt-1">
-                Ingresa los datos personales del viajero para inicializar tu credencial soberana.
+                Ingresa los datos personales del viajero para crear su base de contactos del nodo.
               </p>
             </div>
 
@@ -337,7 +337,7 @@ export default function OrbixerWizard({ onComplete, onCancel }: OrbixerWizardPro
                 Paso 4: Consentimiento de Red y Activación
               </h3>
               <p className="text-sm text-slate-500 mt-1">
-                La economía circular de TS Orbix requiere tu consentimiento soberano para atribuir
+                La economía circular de TS Orbix requiere tu consentimiento para atribuir
                 recompensas entre nodos.
               </p>
             </div>
@@ -387,7 +387,7 @@ export default function OrbixerWizard({ onComplete, onCancel }: OrbixerWizardPro
                     Consiento expresamente mi incorporación a la red TS Orbix *
                   </p>
                   <p className="text-slate-500 mt-1 leading-relaxed">
-                    Autorizo el registro inmutable de mi consentimiento bajo la finalidad{" "}
+                Autorizo el registro verificable de mi consentimiento bajo la finalidad{" "}
                     <code className="bg-slate-200/80 px-1 py-0.5 rounded text-orbix-navy font-mono font-semibold">
                       incorporacion_a_red
                     </code>
@@ -399,7 +399,7 @@ export default function OrbixerWizard({ onComplete, onCancel }: OrbixerWizardPro
 
               <div className="flex items-center gap-2 pt-2 border-t border-slate-200 text-[11px] text-slate-400">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Almacenado de forma segura en la tabla consentimiento del modelo soberano.</span>
+                <span>Almacenado de forma segura y aislada en la base de contactos del nodo.</span>
               </div>
             </div>
           </div>

@@ -4,6 +4,7 @@ import React from 'react';
 type Message = {
   from: 'agent' | 'contact';
   text: string;
+  promoted?: boolean;
 };
 
 interface ChatMessageProps {
@@ -31,7 +32,10 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         }
       >
         {isAgent && (
-          <p className="text-xs font-semibold mb-1" style={{ color: '#29DDDA' }}>🤖 Agente IA</p>
+          <div className="mb-1 flex items-center gap-2">
+            <p className="text-xs font-semibold" style={{ color: '#29DDDA' }}>🤖 Agente IA</p>
+            {message.promoted && <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Promocionado</span>}
+          </div>
         )}
         {message.text}
       </div>

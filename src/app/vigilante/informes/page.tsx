@@ -1,31 +1,32 @@
 "use client";
 import { FileText, Clock, ChevronRight, CheckCircle, Archive } from "lucide-react";
+import { hace, formatFechaISO, nombreMesAnio } from "@/lib/utils/time";
 
 // ─── Data ─────────────────────────────────────────────────────────────────
 const drafts = [
   {
     id: "draft-001",
-    title: "Borrador Agosto 2026",
+    title: "Borrador " + nombreMesAnio(hace(1, 'meses')),
     description: "Análisis estratégico del sector turístico. Pendiente de revisión final antes de publicación.",
-    date: "2026-08-28",
+    date: formatFechaISO(hace(28, 'dias')),
     pages: 24,
     status: "Pendiente de revisión",
   },
   {
     id: "draft-002",
-    title: "Borrador Septiembre 2026",
+    title: "Borrador " + nombreMesAnio(new Date()),
     description: "Análisis Q3 2026: Sostenibilidad y tecnología como ejes de transformación en destinos turísticos.",
-    date: "2026-09-20",
+    date: formatFechaISO(hace(5, 'dias')),
     pages: 31,
     status: "En edición",
   },
 ];
 
 const published = [
-  { id: "rep-001", title: "Informe Julio 2026",  date: "2026-07-31", pages: 28, downloads: 47 },
-  { id: "rep-002", title: "Informe Junio 2026",  date: "2026-06-30", pages: 22, downloads: 63 },
-  { id: "rep-003", title: "Informe Mayo 2026",   date: "2026-05-31", pages: 19, downloads: 38 },
-  { id: "rep-004", title: "Informe Abril 2026",  date: "2026-04-30", pages: 25, downloads: 51 },
+  { id: "rep-001", title: "Informe " + nombreMesAnio(hace(2, 'meses')),  date: formatFechaISO(hace(2, 'meses')), pages: 28, downloads: 47 },
+  { id: "rep-002", title: "Informe " + nombreMesAnio(hace(3, 'meses')),  date: formatFechaISO(hace(3, 'meses')), pages: 22, downloads: 63 },
+  { id: "rep-003", title: "Informe " + nombreMesAnio(hace(4, 'meses')),  date: formatFechaISO(hace(4, 'meses')), pages: 19, downloads: 38 },
+  { id: "rep-004", title: "Informe " + nombreMesAnio(hace(5, 'meses')),  date: formatFechaISO(hace(5, 'meses')), pages: 25, downloads: 51 },
 ];
 
 // ─── Sub-components ────────────────────────────────────────────────────────

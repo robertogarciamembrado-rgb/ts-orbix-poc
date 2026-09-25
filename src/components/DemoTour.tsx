@@ -15,7 +15,7 @@ const TOUR_ROUTES: Record<string, Step[]> = {
       placement: "center",
       title: "Bienvenido a la Capa de Cuenta",
       content:
-        "Este es el identificador inmutable del Nodo. Aquí la empresa gestiona su participación en la red, su membresía y sus reservas de saldo. Todo ocurre bajo un entorno B2B estricto.",
+    "Este es el identificador verificable del Nodo. Aquí la empresa gestiona su participación en la red, su membresía y sus reservas de saldo. Todo ocurre bajo un entorno B2B estricto.",
       skipBeacon: true,
     },
   ],
@@ -23,9 +23,9 @@ const TOUR_ROUTES: Record<string, Step[]> = {
     {
       target: ".tour-saldo-reserva",
       placement: "bottom",
-      title: "Modelo Prepago Inmutable",
+    title: "Modelo Prepago Verificable",
       content:
-        "La red no custodia dinero entre empresas. El anunciante mantiene una reserva de tokens. Cada venta atribuida descuenta su comisión automáticamente de aquí, sin riesgo de impago.",
+    "La red no custodia dinero entre empresas. El anunciante mantiene una reserva de créditos. Cada venta atribuida descuenta su comisión automáticamente de aquí, sin riesgo de impago.",
       skipBeacon: true,
     },
   ],

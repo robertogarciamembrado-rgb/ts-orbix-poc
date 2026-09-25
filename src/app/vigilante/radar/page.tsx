@@ -1,4 +1,6 @@
 "use client";
+import { useEffect, useState } from 'react';
+import { getConvocatoriasVigilante, type ConvocatoriaAlerta } from '@/lib/cortex/api';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
@@ -93,6 +95,12 @@ function MetricCard({ icon: Icon, label, value, accent, sub }: {
 
 // ─── Page ─────────────────────────────────────────────────────────────────
 export default function VigilanteRadar() {
+  const [convocatorias, setConvocatorias] = useState<ConvocatoriaAlerta[]>([]);
+
+  useEffect(() => {
+    getConvocatoriasVigilante().then(setConvocatorias);
+  }, []);
+
   return (
     <div className="space-y-6">
 
@@ -111,6 +119,11 @@ export default function VigilanteRadar() {
         <MetricCard icon={AlertTriangle} label="Alertas alto impacto"   value="2"    accent="#F59E0B" sub="Requieren revisión" />
         <MetricCard icon={BarChart2}   label="Score medio de impacto"   value="387"  accent="#29DDDA" />
       </div>
+
+      <section className="rounded-xl border p-5" style={{ backgroundColor: '#0C1A3E', borderColor: 'rgba(41,221,218,0.22)' }}>
+        <div className="mb-4 flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-400" /><h2 className="text-sm font-bold text-white">Convocatorias y ayudas detectadas</h2></div>
+        <div className="grid gap-3 md:grid-cols-2">{convocatorias.map((convocatoria) => <article key={convocatoria.id} className="rounded-lg border p-4" style={{ borderColor: 'rgba(255,255,255,0.1)' }}><h3 className="text-sm font-bold text-white">{convocatoria.titulo}</h3><p className="mt-2 text-xs text-amber-300">Plazo: {convocatoria.plazo.toLocaleDateString('es-ES')}</p><p className="mt-2 text-xs leading-relaxed text-white/60">{convocatoria.encaje}</p><button className="mt-3 text-xs font-bold text-[#29DDDA] hover:opacity-80">Marcar para seguimiento</button></article>)}</div>
+      </section>
 
       {/* ── CHARTS ROW ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

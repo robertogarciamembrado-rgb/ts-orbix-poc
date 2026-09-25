@@ -14,13 +14,14 @@ import {
   Bot,
   Send,
   FileText,
+  HandHeart,
   type LucideIcon,
 } from 'lucide-react';
+import { useDemoContext } from '@/components/DemoContext';
 
 const accountItems = [
   { name: 'Dashboard',      href: '/cuenta/dashboard',    icon: LayoutDashboard },
   { name: 'Relaciones',     href: '/cuenta/relaciones',   icon: Users },
-  { name: 'Ofertas',        href: '/cuenta/ofertas',      icon: CreditCard },
   { name: 'Encargos',      href: '/cuenta/encargos',    icon: ClipboardList },
   { name: 'Saldo',          href: '/cuenta/saldo',        icon: Wallet },
   { name: 'Resultados',     href: '/cuenta/resultados',   icon: BarChart2 },
@@ -78,6 +79,16 @@ function NavItem({
 }
 
 export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
+  const { nodeId } = useDemoContext();
+  const isProvider = nodeId === 'nodo-003';
+  const contextualAccountItems = [
+    ...accountItems.slice(0, 2),
+    { name: isProvider ? 'Ofertas' : 'Distribuciones', href: '/cuenta/ofertas', icon: CreditCard },
+    ...accountItems.slice(2),
+    { name: 'Informe mensual', href: '/resultados/informe', icon: FileText },
+    { name: 'Nivel asistido', href: '/asistencia', icon: HandHeart },
+  ];
+
   const sidebarContent = (
     <div className="flex flex-col h-full bg-orbix-navy" style={{ backgroundColor: '#091231' }}>
       {/* Logo y botón cerrar en móvil */}
@@ -110,7 +121,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: SidebarProps) {
           Capa de Cuenta
         </p>
         <nav className="space-y-0.5">
-          {accountItems.map((item) => (
+          {contextualAccountItems.map((item) => (
             <NavItem
               key={item.href}
               {...item}

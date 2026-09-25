@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import SegmentBarChart from "@/components/SegmentBarChart";
+import { activarSuscripcionVigilante, getChartSegmentos, getComisionEfectiva, getSuscripcionVigilante } from "@/lib/cortex/api";
+import type { ComisionEfectivaResponse, VigilanteSubscriptionResponse } from "@/lib/cortex/api";
 import {
   Lock,
   Unlock,
@@ -64,16 +65,23 @@ const aviaCards = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────
 export default function AccountInteligencia() {
-  const [unlocked, setUnlocked] = useState(false);
-  const [unlocking, setUnlocking] = useState(false);
+  const [subscription, setSubscription] = useState<VigilanteSubscriptionResponse | null>(null);
+  const [comision, setComision] = useState<ComisionEfectivaResponse | null>(null);
+  const [segmentData, setSegmentData] = useState<{ segmento: string; valor: number }[]>([]);
 
-  function handleUnlock() {
-    setUnlocking(true);
-    setTimeout(() => {
-      setUnlocked(true);
-      setUnlocking(false);
-    }, 900);
+  useEffect(() => {
+    Promise.all([getChartSegmentos(), getSuscripcionVigilante(), getComisionEfectiva()]).then(([segmentos, suscripcion, comisionData]) => {
+      setSegmentData(segmentos);
+      setSubscription(suscripcion);
+      setComision(comisionData);
+    });
+  }, []);
+
+  async function handleSubscribe() {
+    setSubscription(await activarSuscripcionVigilante());
   }
+
+  const unlocked = subscription?.activa ?? false;
 
   return (
     <div className="space-y-6">
@@ -87,6 +95,8 @@ export default function AccountInteligencia() {
           Información estratégica para crecer en la red TS Orbix.
         </p>
       </div>
+
+      {comision && <div className="rounded-2xl border border-cyan-100 bg-cyan-50 p-5"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wider text-orbix-ts">Comisión efectiva</p><p className="mt-1 text-3xl font-bold text-orbix-navy">{comision.efectiva}%</p><p className="mt-1 text-sm text-slate-600">Media ponderada de {comision.ventasFirmes} ventas firmes.</p></div><div className="rounded-xl bg-white px-4 py-3 text-right shadow-sm"><p className="text-xs font-semibold text-slate-500">Comisión declarada en catálogo</p><p className="text-xl font-bold text-slate-700">{comision.declarada}%</p><p className={`text-xs font-bold ${comision.efectiva >= comision.declarada ? 'text-emerald-700' : 'text-amber-700'}`}>Diferencia: {(comision.efectiva - comision.declarada).toFixed(1)} p.p.</p></div></div></div>}
 
       {/* ── FREE PANEL: TSTT REPORT ──────────────────────────────────── */}
       <div
@@ -128,7 +138,7 @@ export default function AccountInteligencia() {
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "#3371AF" }}>
               Crecimiento de Demanda por Segmento · 2026
             </p>
-            <SegmentBarChart />
+            <SegmentBarChart data={segmentData} />
           </div>
 
           {/* Free insight pills */}
@@ -174,14 +184,15 @@ export default function AccountInteligencia() {
               </div>
             </div>
             {!unlocked && (
-              <Link
-                href="/vigilante/radar"
+              <button
+                type="button"
+                onClick={handleSubscribe}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-all hover:brightness-110"
                 style={{ backgroundColor: "#29DDDA", color: "#091231" }}
               >
                 <Unlock className="w-4 h-4" />
-                Desbloquear con 500 Tokens/mes
-              </Link>
+                Activar suscripción mensual
+              </button>
             )}
             {unlocked && (
               <span
@@ -189,7 +200,7 @@ export default function AccountInteligencia() {
                 style={{ backgroundColor: "#29DDDA", color: "#091231" }}
               >
                 <Unlock className="w-3.5 h-3.5" />
-                Módulo Activo
+                Activa · renueva el {subscription?.proximaRenovacion?.toLocaleDateString('es-ES')}
               </span>
             )}
           </div>
@@ -276,16 +287,17 @@ export default function AccountInteligencia() {
             style={{ backgroundColor: "#091231", borderTop: "1px solid rgba(255,255,255,0.06)" }}
           >
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-              500 Tokens/mes · Cancela cuando quieras · Sin permanencia
+              Suscripción mensual descontada del saldo del nodo · Cancela cuando quieras
             </p>
-            <Link
-              href="/vigilante/radar"
+            <button
+              type="button"
+              onClick={handleSubscribe}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all hover:brightness-110"
               style={{ backgroundColor: "#29DDDA", color: "#091231" }}
             >
               <Sparkles className="w-3.5 h-3.5" />
               Activar AVIA Vigilante
-            </Link>
+            </button>
           </div>
         )}
       </div>

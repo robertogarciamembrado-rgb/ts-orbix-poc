@@ -10,12 +10,10 @@ import {
   Cell,
 } from "recharts";
 
-const segmentData = [
-  { segmento: "Gastronomía", valor: 85 },
-  { segmento: "Cultura",     valor: 60 },
-  { segmento: "Naturaleza",  valor: 45 },
-  { segmento: "Bienestar",   valor: 30 },
-];
+interface SegmentDataPoint {
+  segmento: string;
+  valor: number;
+}
 
 const barColors = ["#29DDDA", "#223F7C", "#3371AF", "#223F7C"];
 
@@ -44,10 +42,14 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   );
 }
 
-export default function SegmentBarChart() {
+interface SegmentBarChartProps {
+  data: SegmentDataPoint[];
+}
+
+export default function SegmentBarChart({ data }: SegmentBarChartProps) {
   return (
     <ResponsiveContainer width="100%" height={180}>
-      <BarChart data={segmentData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }} barCategoryGap="30%">
+      <BarChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }} barCategoryGap="30%">
         <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#ECF0F5" />
         <XAxis
           dataKey="segmento"
@@ -63,7 +65,7 @@ export default function SegmentBarChart() {
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "#ECF0F5", opacity: 0.6 }} />
         <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
-          {segmentData.map((_, idx) => (
+          {data.map((_, idx) => (
             <Cell key={idx} fill={barColors[idx % barColors.length]} />
           ))}
         </Bar>

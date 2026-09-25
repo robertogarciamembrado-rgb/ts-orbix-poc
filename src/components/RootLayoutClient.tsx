@@ -6,10 +6,20 @@ import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import { Menu } from "lucide-react";
+import { DemoContextProvider, useDemoContext } from '@/components/DemoContext';
 
 export default function RootLayoutClient({ children }: { children: React.ReactNode }) {
+  return (
+    <DemoContextProvider>
+      <AppShell>{children}</AppShell>
+    </DemoContextProvider>
+  );
+}
+
+function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { nodeId, periodo } = useDemoContext();
 
   const isStandalone =
     pathname === "/" ||
@@ -27,7 +37,7 @@ export default function RootLayoutClient({ children }: { children: React.ReactNo
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar onToggleMobileMenu={() => setMobileOpen((prev) => !prev)} />
         <main className="flex-1 overflow-auto p-4 sm:p-6" style={{ backgroundColor: "#ECF0F5" }}>
-          {children}
+          <div key={`${nodeId}-${periodo}`}>{children}</div>
         </main>
       </div>
 

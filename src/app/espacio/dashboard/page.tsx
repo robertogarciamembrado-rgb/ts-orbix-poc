@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   Bot,
@@ -19,50 +19,10 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-  Legend,
 } from "recharts";
-
-// Datos de interacción por canal de los últimos 7 días
-const interactionData = [
-  { day: "Lun", whatsapp: 420, instagram: 240 },
-  { day: "Mar", whatsapp: 560, instagram: 310 },
-  { day: "Mié", whatsapp: 610, instagram: 390 },
-  { day: "Jue", whatsapp: 780, instagram: 480 },
-  { day: "Vie", whatsapp: 890, instagram: 560 },
-  { day: "Sáb", whatsapp: 1050, instagram: 720 },
-  { day: "Dom", whatsapp: 940, instagram: 650 },
-];
-
-const kpiCards = [
-  {
-    label: "Total Contactos",
-    value: "12,450",
-    detail: "+8.4% vs mes anterior",
-    icon: Users,
-    color: "#223F7C", // orbix-ts
-  },
-  {
-    label: "Tasa de Respuesta IA",
-    value: "94%",
-    detail: "Promedio < 1.2s",
-    icon: Bot,
-    color: "#223F7C", // orbix-ts
-  },
-  {
-    label: "Conversaciones Activas",
-    value: "342",
-    detail: "En tiempo real (WhatsApp/IG)",
-    icon: MessageSquare,
-    color: "#223F7C", // orbix-ts
-  },
-  {
-    label: "Resolución en 1er contacto",
-    value: "88%",
-    detail: "Sin escalado humano",
-    icon: CheckCircle2,
-    color: "#223F7C", // orbix-ts
-  },
-];
+import { consumirPresupuestoAgente, getEspacioDashboard, getChartInteracciones, getPresupuestoAgente } from "@/lib/cortex/api";
+import type { EspacioDashboardResponse, PresupuestoAgenteResponse } from "@/lib/cortex/api";
+import { toast } from "sonner";
 
 // Tooltip estilizado
 function CustomTooltip({ active, payload, label }: any) {
@@ -91,6 +51,59 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function WorkspaceDashboard() {
+  const [metricas, setMetricas] = useState<EspacioDashboardResponse | null>(null);
+  const [chartData, setChartData] = useState<{ day: string; whatsapp: number; instagram: number }[]>([]);
+  const [presupuesto, setPresupuesto] = useState<PresupuestoAgenteResponse | null>(null);
+
+  useEffect(() => {
+    Promise.all([getEspacioDashboard(), getChartInteracciones(), getPresupuestoAgente()]).then(([m, c, p]) => {
+      setMetricas(m);
+      setChartData(c);
+      setPresupuesto(p);
+    });
+  }, []);
+
+  if (!metricas)
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="h-24 bg-slate-200 rounded-2xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-32 bg-slate-200 rounded-xl" />)}
+        </div>
+        <div className="h-80 bg-slate-200 rounded-2xl" />
+      </div>
+    );
+
+  const kpiCards = [
+    {
+      label: "Total Contactos",
+      value: metricas.totalContactos,
+      detail: "+8.4% vs mes anterior",
+      icon: Users,
+    },
+    {
+      label: "Tasa de Respuesta IA",
+      value: metricas.tasaRespuestaIA,
+      detail: "Promedio < 1.2s",
+      icon: Bot,
+    },
+    {
+      label: "Conversaciones Activas",
+      value: metricas.conversacionesActivas,
+      detail: "En tiempo real (WhatsApp/IG)",
+      icon: MessageSquare,
+    },
+    {
+      label: "Resolución en 1er contacto",
+      value: metricas.resolucionPrimerContacto,
+      detail: "Sin escalado humano",
+      icon: CheckCircle2,
+    },
+  ];
+
+  const pctAlcanzados = Math.round((metricas.contactosAlcanzados / metricas.limiteSeguro) * 100);
+  const pctFrecuencia = Math.round((metricas.topeFrecuenciaConsumido / metricas.topeFrecuencia) * 100);
+
   return (
     <div className="space-y-6">
       {/* Header del Espacio */}
@@ -119,7 +132,7 @@ export default function WorkspaceDashboard() {
               Capacidad de Mensajería
             </div>
             <div className="text-sm font-bold text-orbix-navy flex items-center justify-end gap-1.5">
-              <span>98.6% Disponible</span>
+              <span>{metricas.capacidadMensajeria}% Disponible</span>
               <Activity className="w-3.5 h-3.5 text-orbix-ts" />
             </div>
           </div>
@@ -142,6 +155,27 @@ export default function WorkspaceDashboard() {
                 <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-orbix-ts">
                   <Icon className="w-5 h-5 text-orbix-ts" />
                 </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Operación agéntica</p>
+                    <div className="mt-3 flex items-end justify-between"><div><p className="text-3xl font-black text-orbix-navy">{metricas.conversacionesAtendidas}</p><p className="text-sm text-slate-500">Conversaciones atendidas</p></div><div className="text-right"><p className="text-xl font-bold text-orbix-ts">{metricas.tasaRespuestaIA}</p><p className="text-xs text-slate-500">Tasa de respuesta del agente</p></div></div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="flex items-center justify-between"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Tope de frecuencia consumido</p><span className="text-sm font-bold text-orbix-navy">{pctFrecuencia}%</span></div>
+                    <div className="mt-3 h-2 rounded-full bg-slate-100"><div className="h-2 rounded-full bg-orbix-ts" style={{ width: `${pctFrecuencia}%` }} /></div>
+                    <p className="mt-2 text-xs text-slate-500">{metricas.topeFrecuenciaConsumido.toLocaleString('es-ES')} de {metricas.topeFrecuencia.toLocaleString('es-ES')} contactos alcanzados</p>
+                    <div className="mt-4 flex flex-wrap gap-2">{metricas.contactosNuevosPorCanal.map((canal) => <span key={canal.canal} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{canal.canal}: {canal.total} nuevos</span>)}</div>
+                  </div>
+                </div>
+
+                {presupuesto && <div className={`rounded-xl border p-5 shadow-sm ${presupuesto.detenido ? 'border-rose-200 bg-rose-50' : 'border-violet-200 bg-violet-50'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div><p className="text-xs font-bold uppercase tracking-wider text-violet-700">Presupuesto agéntico</p><p className="mt-1 text-sm text-slate-700">{presupuesto.consumido} de {presupuesto.tope} créditos consumidos este mes.</p></div>
+                    <button disabled={presupuesto.detenido} onClick={async () => { try { setPresupuesto(await consumirPresupuestoAgente()); } catch (error) { toast.error(error instanceof Error ? error.message : 'No se pudo ejecutar el agente.'); } }} className="rounded-lg bg-orbix-navy px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{presupuesto.detenido ? 'Tope alcanzado' : 'Ejecutar agente (250 cr.)'}</button>
+                  </div>
+                  <div className="mt-3 h-2 rounded-full bg-white"><div className="h-2 rounded-full bg-violet-500" style={{ width: `${Math.min(100, Math.round((presupuesto.consumido / presupuesto.tope) * 100))}%` }} /></div>
+                </div>}
               </div>
               <div>
                 <div className="text-3xl font-black text-orbix-navy tracking-tight">
@@ -183,7 +217,7 @@ export default function WorkspaceDashboard() {
 
         <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={interactionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
               <XAxis
                 dataKey="day"
@@ -203,7 +237,7 @@ export default function WorkspaceDashboard() {
                 type="monotone"
                 dataKey="whatsapp"
                 name="WhatsApp"
-                stroke="#10B981" // Verde para WhatsApp
+                stroke="#10B981"
                 strokeWidth={3}
                 dot={{ r: 4, fill: "#10B981", strokeWidth: 2, stroke: "#FFFFFF" }}
                 activeDot={{ r: 6, fill: "#10B981" }}
@@ -212,7 +246,7 @@ export default function WorkspaceDashboard() {
                 type="monotone"
                 dataKey="instagram"
                 name="Instagram"
-                stroke="#3371AF" // Azul para Instagram
+                stroke="#3371AF"
                 strokeWidth={3}
                 dot={{ r: 4, fill: "#3371AF", strokeWidth: 2, stroke: "#FFFFFF" }}
                 activeDot={{ r: 6, fill: "#3371AF" }}
@@ -235,27 +269,32 @@ export default function WorkspaceDashboard() {
             Garantiza un máximo de 2 impactos comerciales al mes por contacto para no saturar la base.
           </p>
           <div className="w-full bg-slate-100 rounded-full h-2">
-            <div className="bg-[#29DDDA] h-2 rounded-full" style={{ width: "32%" }}></div>
+            <div
+              className="bg-[#29DDDA] h-2 rounded-full"
+              style={{ width: `${pctAlcanzados}%` }}
+            ></div>
           </div>
           <div className="flex justify-between text-[11px] text-slate-400 mt-2 font-medium">
-            <span>Contactos alcanzados: 3,984</span>
-            <span>Límite seguro: 12,450</span>
+            <span>Contactos alcanzados: {metricas.contactosAlcanzados.toLocaleString("es-ES")}</span>
+            <span>Límite seguro: {metricas.limiteSeguro.toLocaleString("es-ES")}</span>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-orbix-navy">Consumo de Tokens IA</h3>
+            <h3 className="text-sm font-bold text-orbix-navy">Consumo de créditos IA</h3>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700">
-              1 Token / interacción
+              1 crédito / interacción
             </span>
           </div>
           <p className="text-xs text-slate-500 mb-3">
             Interacciones procesadas en modo autónomo por los agentes asignados a los canales.
           </p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-orbix-navy">1,840</span>
-            <span className="text-xs text-slate-400 font-semibold">Tokens este mes</span>
+            <span className="text-2xl font-black text-orbix-navy">
+              {metricas.tokensIAConsumidos.toLocaleString("es-ES")}
+            </span>
+            <span className="text-xs text-slate-400 font-semibold">Créditos este mes</span>
           </div>
         </div>
 
@@ -263,7 +302,7 @@ export default function WorkspaceDashboard() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-bold text-orbix-navy">SLA de Canal</h3>
-              <span className="text-xs font-bold text-emerald-600">99.98%</span>
+              <span className="text-xs font-bold text-emerald-600">{metricas.slaCanal}%</span>
             </div>
             <p className="text-xs text-slate-500">
               Webhooks sincronizados y latencia de entrega de respuestas en tiempo óptimo.

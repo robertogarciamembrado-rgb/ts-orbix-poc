@@ -9,7 +9,8 @@ const mockConversation = [
   },
   {
     from: 'agent' as const,
-    text: 'Basado en tus preferencias de viaje, te recomendamos este Tour Gastronómico [Etiqueta: Promocionado] 🍷 Disponible este sábado en Madrid. ¿Te interesa?',
+    text: 'Basado en tus preferencias de viaje, te recomendamos este Tour Gastronómico 🍷 Disponible este sábado en Madrid. ¿Te interesa?',
+    promoted: true,
   },
   {
     from: 'contact' as const,

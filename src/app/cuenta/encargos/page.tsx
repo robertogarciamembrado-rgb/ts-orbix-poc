@@ -1,16 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ClipboardList,
   FileText,
   Coins,
   Clock,
   CheckCircle,
+  Bot,
   Upload,
   Link as LinkIcon,
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getEncargos } from "@/lib/cortex/api";
+import type { Encargo } from "@/lib/cortex/seed";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type TaskStatus = "Pendiente de Prueba" | "Comprobada (Pendiente de Liquidación)";
@@ -22,41 +25,6 @@ interface Task {
   fee: number;
   status: TaskStatus;
 }
-
-// ─── Mock data ────────────────────────────────────────────────────────────────
-const initialTasks: Task[] = [
-  {
-    id: "ENC-001",
-    requester: "Patronato de Turismo de Madrid",
-    format: "Artículo Patrocinado",
-    fee: 150,
-    status: "Pendiente de Prueba",
-  },
-  {
-    id: "ENC-002",
-    requester: "Asociación Hotelera España",
-    format: "Reseña de Destino",
-    fee: 80,
-    status: "Comprobada (Pendiente de Liquidación)",
-  },
-];
-
-const requestedTasks = [
-  {
-    id: "SOL-001",
-    target: "Blog de Viajes Sur",
-    format: "Artículo Patrocinado",
-    fee: 120,
-    status: "En revisión",
-  },
-  {
-    id: "SOL-002",
-    target: "Revista Digital Turismo",
-    format: "Newsletter Destacado",
-    fee: 90,
-    status: "Aceptado",
-  },
-];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
@@ -90,6 +58,8 @@ function TaskCard({
 }) {
   const [showForm, setShowForm] = useState(false);
   const [url, setUrl] = useState("");
+  const [draft, setDraft] = useState(`Publicación para ${task.requester}: descubre una propuesta de ${task.format} por ${task.fee} créditos, seleccionada para la comunidad TS Orbix.`);
+  const [draftApproved, setDraftApproved] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,12 +102,20 @@ function TaskCard({
           <div className="flex items-center gap-1.5">
             <Coins className="w-4 h-4" style={{ color: "#29DDDA" }} />
             <span className="text-sm font-bold" style={{ color: "#091231" }}>
-              {task.fee} Tokens
+                        {task.fee} Créditos
             </span>
           </div>
         </div>
 
         {/* Action zone */}
+        <div className="mb-4 rounded-xl border border-cyan-100 bg-cyan-50 p-4">
+          <div className="mb-2 flex items-center gap-2"><Bot className="h-4 w-4 text-orbix-ts" /><p className="text-xs font-bold uppercase tracking-wider text-orbix-ts">Redactor de publicaciones</p></div>
+          <textarea value={draft} onChange={(event) => { setDraft(event.target.value); setDraftApproved(false); }} className="min-h-20 w-full rounded-lg border border-cyan-100 bg-white p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orbix-cyan" />
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className={`text-xs font-semibold ${draftApproved ? 'text-emerald-700' : 'text-slate-500'}`}>{draftApproved ? 'Copy aprobado para publicación' : 'Edita el copy antes de aprobarlo'}</span>
+            <button type="button" onClick={() => { setDraftApproved(true); toast.success('Copy aprobado; aún no se ha publicado.'); }} className="rounded-lg bg-orbix-navy px-3 py-1.5 text-xs font-bold text-white">Aprobar copy</button>
+          </div>
+        </div>
         {isPending && !showForm && (
           <button
             onClick={() => setShowForm(true)}
@@ -233,7 +211,26 @@ function TaskCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function AccountEncargos() {
   const [activeTab, setActiveTab] = useState<"publicaciones" | "solicitados">("publicaciones");
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [solicitados, setSolicitados] = useState<Encargo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getEncargos().then((data) => {
+      // Mapear encargos recibidos a formato Task (que permite edición de estado)
+      setTasks(
+        data.publicaciones.map((e) => ({
+          id: e.id,
+          requester: e.contraparte,
+          format: e.formato,
+          fee: e.tarifa,
+          status: e.estado as TaskStatus,
+        }))
+      );
+      setSolicitados(data.solicitados);
+      setLoading(false);
+    });
+  }, []);
 
   function handleSubmitProof(id: string, _url: string) {
     setTasks((prev) =>
@@ -241,8 +238,17 @@ export default function AccountEncargos() {
         t.id === id ? { ...t, status: "Comprobada (Pendiente de Liquidación)" } : t
       )
     );
-    toast.success('Prueba criptográfica vinculada al encargo. Estado actualizado a Comprobada.');
+                  toast.success("Prueba de verificación vinculada al encargo. Estado actualizado a Comprobada.");
   }
+
+  if (loading)
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-slate-200 rounded w-1/3" />
+        <div className="h-40 bg-slate-200 rounded-xl" />
+        <div className="h-40 bg-slate-200 rounded-xl" />
+      </div>
+    );
 
   return (
     <div className="space-y-6">
@@ -311,16 +317,16 @@ export default function AccountEncargos() {
                 </tr>
               </thead>
               <tbody>
-                {requestedTasks.map((t, idx) => (
+                {solicitados.map((t, idx) => (
                   <tr key={t.id} style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#ECF0F5" }}>
                     <td className="px-4 py-3 text-xs font-mono" style={{ color: "#3371AF" }}>{t.id}</td>
-                    <td className="px-4 py-3 text-sm font-medium" style={{ color: "#091231" }}>{t.target}</td>
-                    <td className="px-4 py-3 text-sm" style={{ color: "#3371AF" }}>{t.format}</td>
+                    <td className="px-4 py-3 text-sm font-medium" style={{ color: "#091231" }}>{t.contraparte}</td>
+                    <td className="px-4 py-3 text-sm" style={{ color: "#3371AF" }}>{t.formato}</td>
                     <td className="px-4 py-3 text-sm font-bold" style={{ color: "#091231" }}>
-                      {t.fee} Tokens
+                              {t.tarifa} Créditos
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <StatusBadge status={t.status} />
+                      <StatusBadge status={t.estado} />
                     </td>
                   </tr>
                 ))}

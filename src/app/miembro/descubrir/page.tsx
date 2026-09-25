@@ -1,60 +1,33 @@
 "use client";
+import { useState, useEffect } from "react";
 import ExperienceCard from "@/components/ExperienceCard";
 import Link from "next/link";
 import { ArrowLeft, Sparkles } from "lucide-react";
-
-const experiences = [
-  {
-    imageUrl: "https://images.unsplash.com/photo-1515443961218-a51367888e4b?w=800&q=80",
-    imageAlt: "Tour de tapas por Madrid",
-    tags: [
-      { label: "Gastronomía", bg: "#2563EB" },
-      { label: "Conexión",    bg: "#16A34A" },
-    ],
-    title: "Tour de tapas por Madrid",
-    description:
-      "Recorre los bares más auténticos del centro histórico y descubre la cultura de las tapas junto a guías locales expertos.",
-    meta: { duration: "3h", location: "Madrid", audience: "Amigos" },
-    aiInsight:
-      "Pensamos que podrás disfrutar de un ambiente agradable y acogedor, ideal para tu perfil de viajero social.",
-    review: { text: "Una fiesta de sabores", stars: 5 },
-    commissionBadge: "Comisión: 15%",
-  },
-  {
-    imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80",
-    imageAlt: "Senderismo en los Pirineos",
-    tags: [
-      { label: "Aventura",   bg: "#15803D" },
-      { label: "Naturaleza", bg: "#EA580C" },
-    ],
-    title: "Senderismo en los Pirineos",
-    description:
-      "Una ruta de montaña espectacular con panorámicas únicas de los picos pirenaicos, perfecta para quienes buscan desconectar y superarse.",
-    meta: { duration: "8h", location: "Pirineos", audience: "Exploradores" },
-    aiInsight:
-      "Basándonos en tus preferencias de actividad física y naturaleza, esta ruta encaja perfectamente con tu estilo de viaje.",
-    review: { text: "Vistas inolvidables", stars: 5 },
-    commissionBadge: "Comisión: 12%",
-  },
-  {
-    imageUrl: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80",
-    imageAlt: "Recorrido por el Gótico de Barcelona",
-    tags: [
-      { label: "Cultura",  bg: "#C026D3" },
-      { label: "Historia", bg: "#7C3AED" },
-    ],
-    title: "Recorrido por el Gótico de Barcelona",
-    description:
-      "Un paseo por los callejones medievales de Barcelona, con visitas a iglesias, plazas y rincones secretos que la historia ha preservado.",
-    meta: { duration: "4h", location: "Barcelona", audience: "Curiosos" },
-    aiInsight:
-      "Tu interés por la arquitectura y la historia hacen que este recorrido sea una elección casi perfecta para ti.",
-    review: { text: "Mágico y revelador", stars: 5 },
-    commissionBadge: "Comisión: 10%",
-  },
-];
+import { getExperiencias } from "@/lib/cortex/api";
+import type { Oferta } from "@/lib/cortex/seed";
 
 export default function MiembroDescubrir() {
+  const [experiencias, setExperiencias] = useState<Oferta[] | null>(null);
+
+  useEffect(() => {
+    getExperiencias().then(setExperiencias);
+  }, []);
+
+  if (!experiencias)
+    return (
+      <div className="min-h-screen" style={{ backgroundColor: "#ECF0F5" }}>
+        <header className="bg-white border-b border-slate-100 sticky top-0 z-20">
+          <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+            <div className="h-5 bg-slate-200 rounded w-16 animate-pulse" />
+            <div className="h-5 bg-slate-200 rounded w-24 animate-pulse" />
+          </div>
+        </header>
+        <div className="max-w-5xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3].map((i) => <div key={i} className="h-96 bg-slate-200 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#ECF0F5" }}>
 
@@ -74,8 +47,10 @@ export default function MiembroDescubrir() {
             <span className="text-slate-200 text-sm">|</span>
             <span className="text-slate-500 text-xs font-medium">Portal del Viajero</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: "#ECF0F5", color: "#3371AF" }}>
+          <div
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{ backgroundColor: "#ECF0F5", color: "#3371AF" }}
+          >
             <Sparkles className="w-3.5 h-3.5" />
             Selección IA
           </div>
@@ -98,8 +73,18 @@ export default function MiembroDescubrir() {
       {/* ── CARD GRID ───────────────────────────────────────────── */}
       <div className="max-w-5xl mx-auto px-6 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {experiences.map((exp) => (
-            <ExperienceCard key={exp.title} {...exp} />
+          {experiencias.map((exp) => (
+            <ExperienceCard
+              key={exp.id}
+              imageUrl={exp.imageUrl ?? ""}
+              imageAlt={exp.imageAlt ?? exp.titulo}
+              tags={exp.tags ?? []}
+              title={exp.titulo}
+              description={exp.descripcion ?? ""}
+              meta={exp.meta ?? { duration: "", location: "", audience: "" }}
+              aiInsight={exp.aiInsight ?? ""}
+              review={exp.review ?? { text: "", stars: 5 }}
+            />
           ))}
         </div>
 
